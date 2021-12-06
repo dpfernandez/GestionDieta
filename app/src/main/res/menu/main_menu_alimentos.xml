@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="@string/opListaUsuarios" android:id="@+id/opUsuarios" />
+    <item android:title="@string/opListaAlimentos" android:id="@+id/opAlimentos" />
+    <item android:title="@string/opVisibles" android:id="@+id/opVisibles" />
+    <item android:title="@string/opOcultos" android:id="@+id/opOcultos" />
+</menu>
