@@ -12,6 +12,7 @@ public class Alimento {
         calorias=cal;
     }
 
+
     public String getNombre() {
         return nombre;
     }
@@ -38,6 +39,6 @@ public class Alimento {
 
     @Override
     public String toString(){
-        return nombre +"\n"+cantidad+ " gramos\n"+calorias+" kcal\n\n\n";
+        return nombre +"\n"+cantidad+ " gramos\n"+calorias+" kcal";
     }
 }

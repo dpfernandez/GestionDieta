@@ -1,7 +1,9 @@
 package org.esei.dm2.gestiondieta;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
@@ -20,7 +22,7 @@ public class PerfilUsuario extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_perfil_usuario);
-        this.dbman = new DBManager( this.getApplicationContext() );
+        this.dbman = DBManager.getManager(this.getApplicationContext());
 
         final TextView lblnombre = this.findViewById(R.id.textViewNombre);
         final EditText lblaltura = this.findViewById(R.id.editTextAltura);
@@ -28,6 +30,7 @@ public class PerfilUsuario extends AppCompatActivity {
         final TextView lblsexo = this.findViewById(R.id.seleccionSexo);
         final EditText lbledad = this.findViewById(R.id.editTextEdad);
         final TextView lblobjetivo = this.findViewById(R.id.textViewMostrarObjetivo);
+        final TextView lblmeta = this.findViewById(R.id.textViewMetabolismo);
         final TextView lblmetabolismo = this.findViewById(R.id.textViewMostrarMetabolismo);
         final Button btModifUsuario = this.findViewById(R.id.buttonModifPerfil);
         final Button btBalanceEnergia = this.findViewById(R.id.buttonBalanceEnergia);
@@ -36,8 +39,8 @@ public class PerfilUsuario extends AppCompatActivity {
         btBalanceEnergia.setEnabled(false);
         btHistorial.setEnabled(false);
 
-        final Intent retData = getIntent(); //se obtienen los datos de resultado
-        final String username = retData.getStringExtra( "username" );
+        SharedPreferences prefs = this.getSharedPreferences("NombreUsuario",0);
+        final String username = prefs.getString("username","");
 
         final Cursor cur= dbman.getUsuario(username);
 
@@ -57,6 +60,8 @@ public class PerfilUsuario extends AppCompatActivity {
                                 Toast.makeText(PerfilUsuario.this, "La edad debe ser entre 10 y 120 años", Toast.LENGTH_SHORT).show();
                             } else {
                                 dbman.updateUser(username, Integer.parseInt(lblaltura.getText().toString()), Integer.parseInt(lblpeso.getText().toString()), lblsexo.getText().toString(), Integer.parseInt(lbledad.getText().toString()),lblobjetivo.getText().toString());
+                                if(lblmeta.getVisibility()==View.GONE)//si esta invisible lo pone visible
+                                    lblmeta.setVisibility(View.VISIBLE);
                                 lblmetabolismo.setText(metabolismo(lblsexo.getText().toString(), Integer.parseInt(lblpeso.getText().toString()), Integer.parseInt(lblaltura.getText().toString()), Integer.parseInt(lbledad.getText().toString())) + " calorias");
                                 btBalanceEnergia.setEnabled(true);
                                 btHistorial.setEnabled(true);
@@ -106,6 +111,7 @@ public class PerfilUsuario extends AppCompatActivity {
                     }
                 });
 
+
                 lblnombre.setText(cur.getString(0));
                 lblaltura.setText(cur.getString(1));
                 lblpeso.setText(cur.getString(2));
@@ -121,6 +127,10 @@ public class PerfilUsuario extends AppCompatActivity {
             } else {
                 lblnombre.setText("No se encontraron datos");
             }
+
+            if(lblmetabolismo.getText().toString().equals(""))//pone invisible el textview de
+                //metabolismo basal si no hay nada en el textview que lo muestra
+                lblmeta.setVisibility(View.GONE);
         }
 
         btBalanceEnergia.setOnClickListener(new View.OnClickListener() {

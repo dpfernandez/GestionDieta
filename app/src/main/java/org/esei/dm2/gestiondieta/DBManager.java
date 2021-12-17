@@ -10,7 +10,8 @@ import android.util.Log;
 
 public class DBManager extends SQLiteOpenHelper {
     public static final String DB_NOMBRE = "GestionDieta";
-    public static final int DB_VERSION = 11;
+    public static final int DB_VERSION = 14;
+    private static DBManager instancia;
 
     public static final String TABLA_USUARIO = "usuario";
     public static final String TABLA_ALIMENTO = "alimento";
@@ -38,9 +39,18 @@ public class DBManager extends SQLiteOpenHelper {
 
 
 
-    public DBManager(Context context)
+    private DBManager(Context context)
     {
         super( context, DB_NOMBRE, null, DB_VERSION);
+    }
+
+    public static DBManager getManager(Context c)//si esta nulo instancia la base de datos y la devuelve
+            //de no ser asi, devuelve simplemente la instancia
+    {
+        if ( instancia == null ) {
+            instancia = new DBManager(c);
+        }
+        return instancia;//devuelve instancia de base de datos
     }
 
     @Override
@@ -155,12 +165,6 @@ public class DBManager extends SQLiteOpenHelper {
     {
         return this.getReadableDatabase().query( TABLA_HISTORICO,
                null, NOMBRE_USUARIO + "=?", new String[]{ nombre }, null, null, FECHA +" DESC");
-    }
-
-    public Cursor getAlimentosHistorialUsuario(String nombre, String fecha)
-    {
-        return this.getReadableDatabase().query( TABLA_HISTORICO,
-                new String[] { ALIMENTOS_CONSUMIDOS }, NOMBRE_USUARIO + "=? AND "+FECHA+ "=?", new String[]{ nombre, fecha }, null, null, null);
     }
 
     /** Devuelve el usuario con el nombre de usuario especificado
@@ -285,38 +289,6 @@ public class DBManager extends SQLiteOpenHelper {
         return toret;
     }
 
-    public boolean insertaHistorico2(String nombre, String fecha, String alimentos)
-    {
-        Cursor cursor = null;
-        boolean toret = false;
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-
-        values.put( NOMBRE_USUARIO, nombre );
-        values.put( FECHA, fecha );
-        values.put( ALIMENTOS_CONSUMIDOS, alimentos );
-
-        try {
-            db.beginTransaction();
-            db.insert( TABLA_HISTORICO, null, values );
-            //}
-            db.setTransactionSuccessful();
-            toret = true;
-        } catch(SQLException exc)
-        {
-            Log.e( "DBManager.inserta", exc.getMessage() );
-            toret = false;
-        }
-        finally {
-            if ( cursor != null ) {
-                cursor.close();
-            }
-
-            db.endTransaction();
-        }
-
-        return toret;
-    }
 
     public boolean modificaItem(String username, String password, int admin)
     {
@@ -431,33 +403,6 @@ public class DBManager extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
 
         values.put(CALORIAS_QUEMADAS, calorias);
-        values.put(ALIMENTOS_CONSUMIDOS, alimentos);
-
-        try {
-            db.beginTransaction();
-            db.update(TABLA_HISTORICO,
-                    values,  NOMBRE_USUARIO + " = ? AND " + FECHA + " = ?", new String[]{nombre, fecha});
-            db.setTransactionSuccessful();
-            toret = true;
-        } catch (SQLException exc) {
-            Log.e("DBManager.modifica", exc.getMessage());
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-
-            db.endTransaction();
-        }
-
-        return toret;
-    }
-
-    public boolean modificaHistorico2(String nombre, String fecha, String alimentos) {
-        Cursor cursor = null;
-        boolean toret = false;
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-
         values.put(ALIMENTOS_CONSUMIDOS, alimentos);
 
         try {

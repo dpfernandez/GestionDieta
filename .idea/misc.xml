@@ -1,9 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
-    <output url="file://$PROJECT_DIR$/build/classes" />
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/activity_admin_menu.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/activity_calcular_calorias.xml" value="0.2463768115942029" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/activity_form_alimento.xml" value="0.24003623188405798" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/activity_lista_alimentos.xml" value="0.1" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/activity_perfil_usuario.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/lista_simple_alimentos.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/lvlista_alimentos.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/lvlista_alimentos_2.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/lvlista_historico.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/lvlista_simple_alimentos.xml" value="0.33" />
+        <entry key="..\:/Users/Diego/AndroidStudioProjects/GestionDieta/app/src/main/res/layout/lvlista_usuario.xml" value="0.20416666666666666" />
+      </map>
+    </option>
   </component>
-  <component name="ProjectType">
-    <option name="id" value="Android" />
-  </component>
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK" />
 </project>

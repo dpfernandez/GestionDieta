@@ -1,7 +1,9 @@
 package org.esei.dm2.gestiondieta;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -11,6 +13,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class FormUsuario extends AppCompatActivity {
@@ -26,10 +29,14 @@ public class FormUsuario extends AppCompatActivity {
         final EditText edUsername = this.findViewById( R.id.edUsername);
         final CheckBox cbAdmin = this.findViewById( R.id.cbAdmin );
 
+        SharedPreferences prefs = this.getSharedPreferences("NombreUsuario",0);
+        final String usernameSesion = prefs.getString("username","");
+
         final Intent datosEnviados = this.getIntent();
         // La actividad siempre entra con extras ya sean cadenas vacias a la hora de insertar o los campos del usuario a modificar
 
         final String username = datosEnviados.getExtras().getString( "username", "ERROR" );
+        final int esAdmin = datosEnviados.getExtras().getInt( "esAdmin", 0 );
         final boolean admin = datosEnviados.getExtras().getBoolean( "admin", false );
 
         btGuardar.setEnabled( false );
@@ -45,6 +52,11 @@ public class FormUsuario extends AppCompatActivity {
         } else { // modificar
             text.setText(getString(R.string.modifUsuarioHeader));
             edUsername.setEnabled(false);
+            edPassword.setEnabled(false);
+            if(usernameSesion.equals(username))
+                edPassword.setEnabled(true);
+            if(esAdmin==1)
+                cbAdmin.setChecked(true);
         }
 
         btCancelar.setOnClickListener(new View.OnClickListener() {
@@ -67,18 +79,23 @@ public class FormUsuario extends AppCompatActivity {
                 } else {
                     admin = 0;
                 }
-                final Intent retData = new Intent();
-
-                retData.putExtra( "username", user );
-                retData.putExtra( "password", pass );
-                retData.putExtra( "admin", admin );
-
-                if(!username.equals(""))
-                    FormUsuario.this.setResult(1, retData); // si entra por aqui es para modificar
-                else{
-                    FormUsuario.this.setResult(RESULT_OK, retData); // si entra por aqui es para insertar
+                if(admin==0 && esAdmin==1 && usernameSesion.equals(username)){
+                    AlertDialog.Builder builder = new AlertDialog.Builder( FormUsuario.this );
+                    builder.setTitle( "Vas a perder tus derechos administrativos, estas seguro?" );
+                    builder.setItems( new String[]{ "Si", "No" }, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dlg, int opc) {
+                            if ( opc == 0 ) {
+                                finalizarFormulario(user, pass, admin);
+                            }
+                            else builder.create().closeOptionsMenu();
+                        }
+                    });
+                    builder.create().show();
                 }
-                FormUsuario.this.finish();
+                else{
+                    finalizarFormulario(user, pass, admin);
+                }
             }
         });
 
@@ -115,5 +132,21 @@ public class FormUsuario extends AppCompatActivity {
                 btGuardar.setEnabled( edUsername.getText().toString().trim().length() > 0 && edPassword.getText().toString().trim().length() > 0);
             }
         });
+
+    }
+
+    private void finalizarFormulario(String username, String password, int admin){
+        final Intent retData = new Intent();
+
+        retData.putExtra( "username", username );
+        retData.putExtra( "password", password );
+        retData.putExtra( "admin", admin );
+
+        if(!username.equals(""))
+            FormUsuario.this.setResult(1, retData); // si entra por aqui es para modificar
+        else{
+            FormUsuario.this.setResult(RESULT_OK, retData); // si entra por aqui es para insertar
+        }
+        FormUsuario.this.finish();
     }
 }

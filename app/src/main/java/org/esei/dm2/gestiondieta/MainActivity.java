@@ -1,7 +1,10 @@
 package org.esei.dm2.gestiondieta;
 
 import android.app.Activity;
+import android.app.Application;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -27,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView( R.layout.activity_main );
+        SharedPreferences prefs = this.getSharedPreferences("NombreUsuario",0);
 
         final EditText edUsername = this.findViewById( R.id.edUsernameLogin);
         final EditText edPassword = this.findViewById( R.id.edPasswordLogin);
@@ -34,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         final Button btRegister = this.findViewById( R.id.btRegister );
 
         // añadir usuarios por defecto si no existen
-        this.gestorDB = new DBManager( this.getApplicationContext() );
+        this.gestorDB = DBManager.getManager(this.getApplicationContext());
         if(this.gestorDB.existeItem("a", "a") == -1) {
             this.gestorDB.insertaItem("a", "a", 1);
         }
@@ -83,6 +87,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 final String username = edUsername.getText().toString();
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("username",username);
+                editor.apply();
+
                 final String password = edPassword.getText().toString();
                 int existe = MainActivity.this.gestorDB.existeItem(username, password);
                 if(existe == 0) { // existe y no es admin
@@ -146,18 +154,15 @@ public class MainActivity extends AppCompatActivity {
     {
         Intent subActividad = new Intent( MainActivity.this, PerfilUsuario.class );
 
-        subActividad.putExtra( "username", username );
-
         MainActivity.this.startActivity(subActividad);
     }
 
     private void lanzaMenuAdmin(String username) {
         Intent subActividad = new Intent( MainActivity.this, MenuAdmin.class );
 
-        subActividad.putExtra( "username", username );
-
         MainActivity.this.startActivity(subActividad);
     }
+
 
     private DBManager gestorDB;
     private SimpleCursorAdapter adaptadorDB;

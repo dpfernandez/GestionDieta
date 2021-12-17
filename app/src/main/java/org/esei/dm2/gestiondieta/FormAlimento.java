@@ -28,7 +28,7 @@ public class FormAlimento extends AppCompatActivity {
 
 
         final Intent datosEnviados = this.getIntent();
-        // La actividad siempre entra con extras ya sean cadenas vacias a la hora de insertar o los campos del usuario a modificar
+        // La actividad siempre entra con extras ya sean cadenas vacias a la hora de insertar o los campos del alimento a modificar
 
 
         final String nombre = datosEnviados.getExtras().getString("nombre");

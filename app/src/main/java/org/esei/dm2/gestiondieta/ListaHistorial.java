@@ -2,6 +2,7 @@ package org.esei.dm2.gestiondieta;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,6 +23,10 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import java.util.Locale;
 
@@ -36,7 +41,7 @@ public class ListaHistorial extends AppCompatActivity {
         ListView lvLista = this.findViewById (R.id.lvListaHistorico);
 
         this.registerForContextMenu( lvLista );
-        this.gestorDB = new DBManager( this.getApplicationContext() );
+        this.gestorDB = DBManager.getManager(this.getApplicationContext());
 
     }
 
@@ -48,8 +53,8 @@ public class ListaHistorial extends AppCompatActivity {
         // Configurar lista
         final ListView lvLista = this.findViewById( R.id.lvListaHistorico);
 
-        final Intent retData = getIntent(); //se obtienen los datos de resultado
-        final String nombre = retData.getStringExtra( "username" );
+        SharedPreferences prefs = this.getSharedPreferences("NombreUsuario",0);
+        final String nombre = prefs.getString("username","");
 
         this.adaptadorDB = new SimpleCursorAdapter(
                 this,
@@ -59,6 +64,28 @@ public class ListaHistorial extends AppCompatActivity {
                 new int[] { R.id.lvLista_Historico_Fecha, R.id.lvLista_Historico_CaloriasQuemadas, R.id.lvLista_Historico_Alimentos },
                 0
         );
+
+        this.adaptadorDB.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
+            @Override
+            public boolean setViewValue(View view, Cursor cursor, int column) {
+                if( column == 2 ){ //la columna del campo fecha en el cursor
+                    TextView tv = (TextView) view;
+                    DateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    DateFormat outputFormat = new SimpleDateFormat("dd/MM/yyyy");
+                    String dateStr = cursor.getString(2);//recogemos la fecha en si
+                    Date date = null;
+                    try {
+                        date = inputFormat.parse(dateStr);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    String outputDateStr = outputFormat.format(date);
+                    tv.setText(outputDateStr);
+                    return true;
+                }
+                return false;
+            }
+        });
 
         lvLista.setAdapter( this.adaptadorDB );
         this.actualizaHistorico(nombre);

@@ -1,6 +1,7 @@
 package org.esei.dm2.gestiondieta;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -18,8 +19,8 @@ public class MenuAdmin extends AppCompatActivity {
         final Button btAlimentos = this.findViewById( R.id.btAlimentos );
         final Button btPerfil = this.findViewById( R.id.btPerfilAdmin );
 
-        final Intent retData = getIntent(); //se obtienen los datos de resultado
-        final String username = retData.getStringExtra( "username" );
+        SharedPreferences prefs = this.getSharedPreferences("NombreUsuario",0);
+        final String username = prefs.getString("username","");
 
         btUsuarios.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -52,8 +53,6 @@ public class MenuAdmin extends AppCompatActivity {
     private void lanzaPerfilUsuario(String username)
     {
         Intent subActividad = new Intent( MenuAdmin.this, PerfilUsuario.class );
-
-        subActividad.putExtra( "username", username );
 
         MenuAdmin.this.startActivity(subActividad);
     }

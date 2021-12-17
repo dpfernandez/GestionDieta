@@ -1,6 +1,7 @@
 package org.esei.dm2.gestiondieta;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.Locale;
@@ -40,7 +42,7 @@ public class ListaUsuarios extends AppCompatActivity {
         btInserta.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                lanzaEditor( "", true );
+                lanzaEditor( "", 0, true );
             }
         });
 
@@ -79,7 +81,7 @@ public class ListaUsuarios extends AppCompatActivity {
         this.activityResultLauncherEdit = this.registerForActivityResult(contract, callback);
 
         this.registerForContextMenu( lvLista );
-        this.gestorDB = new DBManager( this.getApplicationContext() );
+        this.gestorDB = DBManager.getManager(this.getApplicationContext());
     }
 
     @Override
@@ -169,8 +171,19 @@ public class ListaUsuarios extends AppCompatActivity {
             case R.id.item_contextual_elimina:
                 if ( cursor.moveToPosition( pos ) ) {
                     final String username = cursor.getString( 0 );
-                    this.gestorDB.eliminaItem( username );
-                    this.actualizaUsuario();
+                    AlertDialog.Builder builder = new AlertDialog.Builder( ListaUsuarios.this );
+                    builder.setTitle( "Estas seguro?" );
+                    builder.setItems( new String[]{ "Si", "No" }, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dlg, int opc) {
+                            if ( opc == 0 ) {
+                                ListaUsuarios.this.gestorDB.eliminaItem( username );
+                                ListaUsuarios.this.actualizaUsuario();
+                            }
+                            else builder.create().closeOptionsMenu();
+                        }
+                    });
+                    builder.create().show();
                     toret = true;
                 } else {
                     String msg = this.getString( R.string.msgNoPos ) + ": " + pos;
@@ -182,9 +195,9 @@ public class ListaUsuarios extends AppCompatActivity {
             case R.id.item_contextual_modifica:
                 if ( cursor.moveToPosition( pos ) ) {
                     final String username = cursor.getString( 0 );
-                    final int psw = cursor.getInt( 1 );
+                    final int esAdmin = cursor.getInt(2);
 
-                    lanzaEditor( username, true );
+                    lanzaEditor( username, esAdmin, true );
                     toret = true;
                 } else {
                     String msg = this.getString( R.string.msgNoPos ) + ": " + pos;
@@ -223,11 +236,12 @@ public class ListaUsuarios extends AppCompatActivity {
         lblNum.setText( String.format( Locale.getDefault(),"%d", this.adaptadorDB.getCount() ) );
     }
 
-    private void lanzaEditor(String username, boolean admin)
+    private void lanzaEditor(String username,int esAdmin, boolean admin)
     {
         Intent subActividad = new Intent( ListaUsuarios.this, FormUsuario.class );
 
         subActividad.putExtra( "username", username );
+        subActividad.putExtra( "esAdmin", esAdmin );
         subActividad.putExtra( "admin", admin );
 
         activityResultLauncherEdit.launch(subActividad);

@@ -7,6 +7,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.ContextMenu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,7 +21,12 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 import android.content.SharedPreferences;
+
+import java.text.ParseException;
 import java.time.LocalDate;
+import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -32,13 +40,10 @@ import java.util.ArrayList;
 public class CalcularCalorias extends AppCompatActivity {
 
     private ActivityResultLauncher<Intent> activityResultLauncherEdit;
-    private String username;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calcular_calorias);
-        this.dbman = new DBManager( this.getApplicationContext() );
-
 
         this.items = new ArrayList<Alimento>();
 
@@ -49,48 +54,34 @@ public class CalcularCalorias extends AppCompatActivity {
         ListView lvItems = this.findViewById( R.id.lvLista );
         ListView lvItems2 = this.findViewById(R.id.lvLista2);
         TextView date = this.findViewById(R.id.textViewMostrarFecha);
+
+        /**Para transformar la fecha se definen dos DateFormat, uno con el formato inicial y otro con el
+         formato resultado, se parsea mediante el primer DateFormat la cadena con la fecha original a Date,
+         posteriormente con el segundo DateFormat y format(Date) se pasa esa Date a cadena con el formato deseado**/
+
+        DateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
+        DateFormat outputFormat = new SimpleDateFormat("dd/MM/yyyy");
         String fecha = LocalDate.now().toString();
+        Date dateStr= null;
+        try {
+            dateStr = inputFormat.parse(fecha);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String outputDateStr = outputFormat.format(dateStr);
+        date.setText(outputDateStr);
 
-        date.setText(fecha);
-
-
+        SharedPreferences prefsUsuario = this.getSharedPreferences("NombreUsuario",0);
+        String username = prefsUsuario.getString("username","");
         final Intent retData = getIntent(); //se obtienen los datos de resultado
         final Double metabolismo = retData.getExtras().getDouble( "metabolismo" );
-        username = retData.getExtras().getString( "username" );
         final String objetivo = retData.getExtras().getString( "objetivo" );
 
-        lvItems.setLongClickable( true );
         this.itemsAdapter = new ArrayAdapter<Alimento>(
-                this.getApplicationContext(),
-                android.R.layout.simple_selectable_list_item,
+                this.getApplicationContext(),android.R.layout.simple_selectable_list_item,
                 this.items
         );
         lvItems.setAdapter(this.itemsAdapter);
-
-        lvItems.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                if ( pos >= 0 ) {
-                    CalcularCalorias.this.items.remove(pos);
-                    CalcularCalorias.this.itemsAdapter.notifyDataSetChanged();
-
-                    String nombresAlimentos ="";
-                    for(int i=0; i<itemsAdapter.getCount(); i++){
-                        nombresAlimentos= nombresAlimentos+itemsAdapter.getItem(i).getNombre()+"\n";
-                    }
-                    actualizaHistorico2(username,fecha,nombresAlimentos);
-                }
-                return false;
-            }
-        });
-
-        lvItems.setOnItemClickListener(new AdapterView.OnItemClickListener(){
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                if ( pos >= 0 )
-                    modificarCantidad(pos);
-            }
-        });
 
         lvItems2.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
@@ -99,12 +90,8 @@ public class CalcularCalorias extends AppCompatActivity {
                 Alimento alimento = new Alimento (cursor.getString(0), cursor.getInt(1), cursor.getInt(2));
                 if ( pos >= 0 ){
                     CalcularCalorias.this.itemsAdapter.add(alimento);
-
-                    String nombresAlimentos ="";
-                    for(int i=0; i<itemsAdapter.getCount(); i++){
-                        nombresAlimentos= nombresAlimentos+itemsAdapter.getItem(i).getNombre()+"\n";
-                    }
-                    actualizaHistorico2(username,fecha,nombresAlimentos);
+                    int lastIndex = itemsAdapter.getCount() - 1;
+                    lvItems.smoothScrollToPosition(lastIndex);
                 }
             }
         });
@@ -131,13 +118,9 @@ public class CalcularCalorias extends AppCompatActivity {
 
 
                             CalcularCalorias.this.itemsAdapter.add(alimento);
+                            int lastIndex = itemsAdapter.getCount() - 1;
+                            lvItems.smoothScrollToPosition(lastIndex);
                             CalcularCalorias.this.dbman.insertaAlimento(nombre, cantidad, calorias);
-
-                            String nombresAlimentos ="";
-                            for(int i=0; i<itemsAdapter.getCount(); i++){
-                                nombresAlimentos= nombresAlimentos+itemsAdapter.getItem(i).getNombre()+"\n";
-                            }
-                            actualizaHistorico2(username,fecha,nombresAlimentos);
 
                             /** al añadir alimentos con nombres que aun no se encuentran registrados
                             en la BD, son insertados automaticamente, de esta manera la
@@ -179,36 +162,14 @@ public class CalcularCalorias extends AppCompatActivity {
 
         this.registerForContextMenu( lvItems );
 
-        this.dbman = new DBManager( this.getApplicationContext() );
+        this.dbman = DBManager.getManager(this.getApplicationContext());
 
-        if(dbman.existeHistorico(username,fecha)) {
+        SharedPreferences prefs = this.getPreferences( Context.MODE_PRIVATE );
 
-            Cursor cursorAlimentos = this.dbman.getAlimentosHistorialUsuario(username, fecha);
-
-            if(cursorAlimentos!=null && cursorAlimentos.getCount()>0) {
-                if (cursorAlimentos.moveToFirst()) {
-
-                    String stringAlimentos = cursorAlimentos.getString(0);
-                    String[] alims = stringAlimentos.split("\\n");
-
-                    SharedPreferences prefs = this.getPreferences( Context.MODE_PRIVATE );
-
-                    for (int i = 0; i < alims.length; i++) {
-                        Cursor cursorAlimento = this.dbman.getAlimento(alims[i]);
-                        if(cursorAlimento!=null && cursorAlimento.getCount()>0) {
-                            if (cursorAlimento.moveToFirst()) {
-                                Alimento alimento = new Alimento(cursorAlimento.getString(0), prefs.getInt(username+"_"+i+"_"+cursorAlimento.getString(0)+"_cantidad", 1 ),prefs.getInt(username+"_"+i+"_"+cursorAlimento.getString(0)+"_calorias", 1 ));
-                                this.itemsAdapter.add(alimento);
-                            }
-                        }
-                    }
-                }
-            }
+        for (int i = 0; i < prefs.getInt(username,0); i++) {
+                    Alimento alimento = new Alimento(prefs.getString(username+"_"+i,""), prefs.getInt(username+"_"+i+"_cantidad", 1 ),prefs.getInt(username+"_"+i+"_calorias", 1 ));
+                    this.itemsAdapter.add(alimento);
         }
-
-
-
-
     }
 
     @Override
@@ -233,19 +194,63 @@ public class CalcularCalorias extends AppCompatActivity {
     }
 
     @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
+    {
+        super.onCreateContextMenu( menu, v, menuInfo );
+
+        if ( v.getId() == R.id.lvLista ) {
+            this.getMenuInflater().inflate( R.menu.lista_menu_contextual, menu );
+        }
+
+        return;
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item)
+    {
+        boolean toret = super.onContextItemSelected(item);
+        int pos = ( (AdapterView.AdapterContextMenuInfo) item.getMenuInfo() ).position;
+
+        switch ( item.getItemId() ) {
+            case R.id.item_contextual_elimina:
+                if ( pos>=0) {
+                    CalcularCalorias.this.items.remove(pos);
+                    CalcularCalorias.this.itemsAdapter.notifyDataSetChanged();
+                    toret = true;
+                } else {
+                    String msg = this.getString( R.string.msgNoPos ) + ": " + pos;
+                    Log.e( "context_elimina", msg );
+                    Toast.makeText( this, msg, Toast.LENGTH_LONG ).show();
+                }
+
+                break;
+            case R.id.item_contextual_modifica:
+                if ( pos>=0) {
+                    modificarCantidad(pos);
+                }
+
+                break;
+        }
+
+        return toret;
+    }
+
+    @Override
     public void onPause()
     {
         super.onPause();
 
-        String usuario = CalcularCalorias.this.username;
-
+        SharedPreferences prefsUsuario = this.getSharedPreferences("NombreUsuario",0);
+        String username = prefsUsuario.getString("username","");
         SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
         if(!itemsAdapter.isEmpty()) {
+            editor.putInt(username,itemsAdapter.getCount());
             for (int i = 0; i < itemsAdapter.getCount(); i++) {
-                editor.putInt(usuario+"_"+i+"_"+itemsAdapter.getItem(i).getNombre() + "_cantidad", itemsAdapter.getItem(i).getCantidad());
-                editor.putInt(usuario+"_"+i+"_"+itemsAdapter.getItem(i).getNombre() + "_calorias", itemsAdapter.getItem(i).getCalorias());
+                editor.putString(username+"_"+i,itemsAdapter.getItem(i).getNombre());
+                editor.putInt(username+"_"+i+"_cantidad", itemsAdapter.getItem(i).getCantidad());
+                editor.putInt(username+"_"+i+"_calorias", itemsAdapter.getItem(i).getCalorias());
             }
         }
         editor.apply();
@@ -305,15 +310,6 @@ public class CalcularCalorias extends AppCompatActivity {
         }
     }
 
-    private void actualizaHistorico2(String nombre, String fecha, String alimentos){
-        if(dbman.existeHistorico(nombre, fecha)){
-            dbman.modificaHistorico2(nombre,fecha,alimentos);
-        }
-        else{
-            dbman.insertaHistorico2(nombre,fecha,alimentos);
-        }
-    }
-
     private void avisarBalance(String objetivo, double balance){
         if(objetivo.equals("Subir de peso")){
             if(balance < 500){
@@ -341,7 +337,6 @@ public class CalcularCalorias extends AppCompatActivity {
             else Toast.makeText( CalcularCalorias.this, "Estás con un déficit demasiado elevado, tu salud podría resentirse", Toast.LENGTH_SHORT ).show();
         }
     }
-
 
 
     private ArrayAdapter<Alimento> itemsAdapter;
