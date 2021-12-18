@@ -46,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
             this.gestorDB.insertaItem("u", "u", 0);
         }
 
+        //añadir alimentos por defecto
+
+
         // Inserta
         btRegister.setOnClickListener(new View.OnClickListener() {
             @Override
