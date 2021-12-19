@@ -1,9 +1,7 @@
 package org.esei.dm2.gestiondieta;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
@@ -39,10 +37,9 @@ public class PerfilUsuario extends AppCompatActivity {
         btBalanceEnergia.setEnabled(false);
         btHistorial.setEnabled(false);
 
-        SharedPreferences prefs = this.getSharedPreferences("NombreUsuario",0);
-        final String username = prefs.getString("username","");
+        datos = ( (App) this.getApplication() ).getDatos();
 
-        final Cursor cur= dbman.getUsuario(username);
+        final Cursor cur= dbman.getUsuario(datos.getUsername());
 
 
         if(cur!=null && cur.getCount()>0) {
@@ -59,7 +56,7 @@ public class PerfilUsuario extends AppCompatActivity {
                             } else if (Integer.parseInt(lbledad.getText().toString()) < 10 || Integer.parseInt(lbledad.getText().toString()) > 120){
                                 Toast.makeText(PerfilUsuario.this, "La edad debe ser entre 10 y 120 años", Toast.LENGTH_SHORT).show();
                             } else {
-                                dbman.updateUser(username, Integer.parseInt(lblaltura.getText().toString()), Integer.parseInt(lblpeso.getText().toString()), lblsexo.getText().toString(), Integer.parseInt(lbledad.getText().toString()),lblobjetivo.getText().toString());
+                                dbman.updateUser(datos.getUsername(), Integer.parseInt(lblaltura.getText().toString()), Integer.parseInt(lblpeso.getText().toString()), lblsexo.getText().toString(), Integer.parseInt(lbledad.getText().toString()),lblobjetivo.getText().toString());
                                 if(lblmeta.getVisibility()==View.GONE)//si esta invisible lo pone visible
                                     lblmeta.setVisibility(View.VISIBLE);
                                 lblmetabolismo.setText(metabolismo(lblsexo.getText().toString(), Integer.parseInt(lblpeso.getText().toString()), Integer.parseInt(lblaltura.getText().toString()), Integer.parseInt(lbledad.getText().toString())) + " calorias");
@@ -137,7 +134,7 @@ public class PerfilUsuario extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(!lblaltura.getText().toString().equals("") && !lblpeso.getText().toString().equals("") && !lblsexo.getText().toString().equals("") && !lbledad.getText().toString().equals("") && !lblobjetivo.getText().toString().equals("")) {
-                    lanzaBalanceEnergia(metabolismo(lblsexo.getText().toString(), Integer.parseInt(lblpeso.getText().toString()), Integer.parseInt(lblaltura.getText().toString()), Integer.parseInt(lbledad.getText().toString())), username, lblobjetivo.getText().toString());
+                    lanzaBalanceEnergia(metabolismo(lblsexo.getText().toString(), Integer.parseInt(lblpeso.getText().toString()), Integer.parseInt(lblaltura.getText().toString()), Integer.parseInt(lbledad.getText().toString())), datos.getUsername(), lblobjetivo.getText().toString());
                 }
                 else Toast.makeText(PerfilUsuario.this, "Por favor, completa antes tu perfil", Toast.LENGTH_SHORT).show();
             }
@@ -146,7 +143,7 @@ public class PerfilUsuario extends AppCompatActivity {
         btHistorial.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lanzaHistorial(username);
+                lanzaHistorial(datos.getUsername());
             }
         });
     }
@@ -176,4 +173,6 @@ public class PerfilUsuario extends AppCompatActivity {
     private void lanzaHistorial(String username){
         PerfilUsuario.this.startActivity(new Intent(PerfilUsuario.this, ListaHistorial.class).putExtra("username", username));
     }
+
+    private DatosUsuario datos;
 }

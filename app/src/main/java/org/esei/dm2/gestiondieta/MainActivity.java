@@ -1,18 +1,13 @@
 package org.esei.dm2.gestiondieta;
 
 import android.app.Activity;
-import android.app.Application;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -30,30 +25,39 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView( R.layout.activity_main );
-        SharedPreferences prefs = this.getSharedPreferences("NombreUsuario",0);
 
         final EditText edUsername = this.findViewById( R.id.edUsernameLogin);
         final EditText edPassword = this.findViewById( R.id.edPasswordLogin);
         final Button btLogin = this.findViewById( R.id.btLogin );
         final Button btRegister = this.findViewById( R.id.btRegister );
 
-        // añadir usuarios por defecto si no existen
         this.gestorDB = DBManager.getManager(this.getApplicationContext());
-        if(this.gestorDB.existeItem("a", "a") == -1) {
-            this.gestorDB.insertaItem("a", "a", 1);
+
+        // añadir alimentos por defecto si aún no existen
+        if(!this.gestorDB.existeAlimento("manzana")) {
+            this.gestorDB.insertaAlimento("manzana", 150, 77, true);
         }
-        if(this.gestorDB.existeItem("u", "u") == -1) {
-            this.gestorDB.insertaItem("u", "u", 0);
+        if(!this.gestorDB.existeAlimento("pollo")) {
+            this.gestorDB.insertaAlimento("pollo", 200, 214, true);
+        }
+        if(!this.gestorDB.existeAlimento("arroz")) {
+            this.gestorDB.insertaAlimento("arroz", 100, 129, true);
         }
 
-        //añadir alimentos por defecto
+        // añadir usuarios por defecto si aún no existen
+        if(this.gestorDB.existeUsuario("a", "a") == -1) {
+            this.gestorDB.insertaUsuario("a", "a", 1);
+        }
+        if(this.gestorDB.existeUsuario("u", "u") == -1) {
+            this.gestorDB.insertaUsuario("u", "u", 0);
+        }
 
 
         // Inserta
         btRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                lanzaFormUsuario("", false);
+                lanzaFormUsuario("", "", false);
             }
         });
 
@@ -71,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                                 String password = retData.getExtras().getString("password");
                                 int admin = retData.getExtras().getInt("admin");
                                 if (result.getResultCode() == Activity.RESULT_OK) {
-                                    if (MainActivity.this.gestorDB.insertaItem(username, password, admin)) {
+                                    if (MainActivity.this.gestorDB.insertaUsuario(username, password, admin)) {
                                         Toast.makeText(MainActivity.this, "Usuario creado correctamente.", Toast.LENGTH_SHORT).show();
                                     } else {
                                         Toast.makeText(MainActivity.this, "Error, el usuario ya existe.", Toast.LENGTH_SHORT).show();
@@ -90,16 +94,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 final String username = edUsername.getText().toString();
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("username",username);
-                editor.apply();
-
                 final String password = edPassword.getText().toString();
-                int existe = MainActivity.this.gestorDB.existeItem(username, password);
+
+                int existe = MainActivity.this.gestorDB.existeUsuario(username, password);
                 if(existe == 0) { // existe y no es admin
-                    lanzaPerfilUsuario(username);
+                    ( (App) MainActivity.this.getApplication() )
+                            .setDatos(new DatosUsuario(username, false)); // guardar datos usuario
+                    lanzaPerfilUsuario();
                 } else if(existe == 1) { // existe y es admin
-                    lanzaMenuAdmin(username);
+                    ( (App) MainActivity.this.getApplication() )
+                            .setDatos(new DatosUsuario(username, true)); // guardar datos usuario
+                    lanzaMenuAdmin();
                 } else { // usuario no existe
                     Toast.makeText( MainActivity.this, "Usuario o contraseña incorrectos.", Toast.LENGTH_SHORT ).show();
                 }
@@ -143,30 +148,34 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void lanzaFormUsuario(String username, boolean admin)
+    @Override
+    protected void onResume() { // siempre que se vuelva a la MainActivity (pantalla login), se eliminan los datos de la clase App
+        super.onResume();
+        ( (App) this.getApplication() ).logout();
+    }
+
+    private void lanzaFormUsuario(String username, String password, boolean admin)
     {
         Intent subActividad = new Intent( MainActivity.this, FormUsuario.class );
 
         subActividad.putExtra( "username", username );
+        subActividad.putExtra( "password", password );
         subActividad.putExtra( "admin", admin );
 
         activityResultLauncherEdit.launch(subActividad);
     }
 
-    private void lanzaPerfilUsuario(String username)
-    {
+    private void lanzaPerfilUsuario() {
         Intent subActividad = new Intent( MainActivity.this, PerfilUsuario.class );
 
         MainActivity.this.startActivity(subActividad);
     }
 
-    private void lanzaMenuAdmin(String username) {
+    private void lanzaMenuAdmin() {
         Intent subActividad = new Intent( MainActivity.this, MenuAdmin.class );
 
         MainActivity.this.startActivity(subActividad);
     }
 
-
     private DBManager gestorDB;
-    private SimpleCursorAdapter adaptadorDB;
 }

@@ -44,13 +44,12 @@ public class DBManager extends SQLiteOpenHelper {
         super( context, DB_NOMBRE, null, DB_VERSION);
     }
 
-    public static DBManager getManager(Context c)//si esta nulo instancia la base de datos y la devuelve
-            //de no ser asi, devuelve simplemente la instancia
-    {
-        if ( instancia == null ) {
+    public static DBManager getManager(Context c) { //si no está ya creada, se crea y se devuelve
+                                                    //si ya está creada, devuelve simplemente la instancia
+        if (instancia == null) {
             instancia = new DBManager(c);
         }
-        return instancia;//devuelve instancia de base de datos
+        return instancia;
     }
 
     @Override
@@ -174,12 +173,12 @@ public class DBManager extends SQLiteOpenHelper {
         return this.getReadableDatabase().rawQuery(" SELECT " +COL_NOM_USUARIO+", " +USUARIO_ALTURA+", "+USUARIO_PESO+", "+USUARIO_SEXO+", " +USUARIO_EDAD+", " +USUARIO_OBJETIVO+" FROM " +TABLA_USUARIO+ " WHERE " + COL_NOM_USUARIO +"=?",new String[]{nombre});
     }
 
-    /** Inserta un nuevo item.
-     * @param username El username del item.
-     * @param password La password del item.
+    /** Inserta un nuevo usuario.
+     * @param username El username del usuario.
+     * @param password La password del usuario.
      * @return true si se pudo insertar (o modificar), false en otro caso.
      */
-    public boolean insertaItem(String username, String password, int admin)
+    public boolean insertaUsuario(String username, String password, int admin)
     {
         Cursor cursor = null;
         boolean toret = false;
@@ -192,23 +191,12 @@ public class DBManager extends SQLiteOpenHelper {
 
         try {
             db.beginTransaction();
-            /*cursor = db.query( TABLA_USUARIO,
-                    null,
-                    COL_NOM_USUARIO + "=?",
-                    new String[]{ username },
-                    null, null, null, null );
-
-            if ( cursor.getCount() > 0 ) {
-                db.update( TABLA_USUARIO,
-                        values, COL_NOM_USUARIO + "= ?", new String[]{ username } );
-            } else {*/
             db.insertWithOnConflict( TABLA_USUARIO, null, values, SQLiteDatabase.CONFLICT_ABORT );
-            //}
             db.setTransactionSuccessful();
             toret = true;
         } catch(SQLException exc)
         {
-            Log.e( "DBManager.inserta", exc.getMessage() );
+            Log.e( "DBManager.insertaUsuario", exc.getMessage() );
         }
         finally {
             if ( cursor != null ) {
@@ -221,7 +209,7 @@ public class DBManager extends SQLiteOpenHelper {
         return toret;
     }
 
-    public boolean insertaAlimento(String nombre, int cantidad, int calorias)
+    public boolean insertaAlimento(String nombre, int cantidad, int calorias, boolean visible)
     {
         Cursor cursor = null;
         boolean toret = false;
@@ -231,18 +219,16 @@ public class DBManager extends SQLiteOpenHelper {
         values.put( NOMBRE_ALIMENTO, nombre );
         values.put( CANTIDAD_ALIMENTO, cantidad );
         values.put( CALORIAS_ALIMENTO, calorias );
-        values.put( VISIBILIDAD_ALIMENTO, false );
+        values.put( VISIBILIDAD_ALIMENTO, visible );
 
         try {
             db.beginTransaction();
             db.insertWithOnConflict( TABLA_ALIMENTO, null, values, SQLiteDatabase.CONFLICT_ABORT );
-            //}
             db.setTransactionSuccessful();
             toret = true;
         } catch(SQLException exc)
         {
-            Log.e( "DBManager.inserta", exc.getMessage() );
-            toret = false;
+            Log.e( "DBManager.insertaAlimento", exc.getMessage() );
         }
         finally {
             if ( cursor != null ) {
@@ -275,8 +261,7 @@ public class DBManager extends SQLiteOpenHelper {
             toret = true;
         } catch(SQLException exc)
         {
-            Log.e( "DBManager.inserta", exc.getMessage() );
-            toret = false;
+            Log.e( "DBManager.insertaHistorico", exc.getMessage() );
         }
         finally {
             if ( cursor != null ) {
@@ -290,7 +275,7 @@ public class DBManager extends SQLiteOpenHelper {
     }
 
 
-    public boolean modificaItem(String username, String password, int admin)
+    public boolean modificaUsuario(String username, String password, int admin)
     {
         Cursor cursor = null;
         boolean toret = false;
@@ -303,24 +288,13 @@ public class DBManager extends SQLiteOpenHelper {
 
         try {
             db.beginTransaction();
-            /*cursor = db.query( TABLA_USUARIO,
-                    null,
-                    COL_NOM_USUARIO + "=?",
-                    new String[]{ username },
-                    null, null, null, null );
-
-            if ( cursor.getCount() > 0 ) {*/
             db.updateWithOnConflict( TABLA_USUARIO,
                     values, COL_NOM_USUARIO + "= ?", new String[]{ username }, SQLiteDatabase.CONFLICT_IGNORE );
-            /*} else {
-                db.insert( TABLA_USUARIO, null, values );
-            }*/
-
             db.setTransactionSuccessful();
             toret = true;
         } catch(SQLException exc)
         {
-            Log.e( "DBManager.modifica", exc.getMessage() );
+            Log.e( "DBManager.modificaUsuario", exc.getMessage() );
         }
         finally {
             if ( cursor != null ) {
@@ -351,7 +325,7 @@ public class DBManager extends SQLiteOpenHelper {
             toret = true;
         } catch(SQLException exc)
         {
-            Log.e( "DBManager.modifica", exc.getMessage() );
+            Log.e( "DBManager.ocultaDesoculta", exc.getMessage() );
         }
         finally {
             if ( cursor != null ) {
@@ -383,7 +357,7 @@ public class DBManager extends SQLiteOpenHelper {
             toret = true;
         } catch(SQLException exc)
         {
-            Log.e( "DBManager.modifica", exc.getMessage() );
+            Log.e( "DBManager.modificaAlimento", exc.getMessage() );
         }
         finally {
             if ( cursor != null ) {
@@ -412,7 +386,7 @@ public class DBManager extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
             toret = true;
         } catch (SQLException exc) {
-            Log.e("DBManager.modifica", exc.getMessage());
+            Log.e("DBManager.modificaHistorico", exc.getMessage());
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -430,7 +404,7 @@ public class DBManager extends SQLiteOpenHelper {
      * @param username El identificador del elemento.
      * @return true si se pudo eliminar, false en otro caso.
      */
-    public boolean eliminaItem(String username)
+    public boolean eliminaUsuario(String username)
     {
         boolean toret = false;
         SQLiteDatabase db = this.getWritableDatabase();
@@ -441,7 +415,7 @@ public class DBManager extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
             toret = true;
         } catch(SQLException exc) {
-            Log.e( "DBManager.elimina", exc.getMessage() );
+            Log.e( "DBManager.eliminaUsuario", exc.getMessage() );
         } finally {
             db.endTransaction();
         }
@@ -460,7 +434,7 @@ public class DBManager extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
             toret = true;
         } catch(SQLException exc) {
-            Log.e( "DBManager.elimina", exc.getMessage() );
+            Log.e( "DBManager.eliminaAlimento", exc.getMessage() );
         } finally {
             db.endTransaction();
         }
@@ -470,9 +444,9 @@ public class DBManager extends SQLiteOpenHelper {
 
     /** Comprueba si existe el usuario.
      * @param username El username a buscar.
-     * @return true si el usuario existe, false en otro caso.
+     * @return 1 si el usuario es admin, 0 si no es admin, -1 si el usuario no existe o si la contraseña no es correcta
      */
-    public int existeItem(String username, String password)
+    public int existeUsuario(String username, String password)
     {
         Cursor cursor = null;
         int toret = -1;
@@ -480,10 +454,10 @@ public class DBManager extends SQLiteOpenHelper {
 
         try {
             db.beginTransaction();
-            cursor = db.query( TABLA_USUARIO,                                   // FROM tabla
+            cursor = db.query( TABLA_USUARIO,                                  // FROM tabla
                     null,                                              // SELECT (null equivale a *)
                     COL_NOM_USUARIO + "=? AND " + COL_PASSWORD + "=?", // WHERE
-                    new String[]{ username, password },                         // valor(es) de la(s) "?" en el WHERE
+                    new String[]{ username, password },                        // valor(es) de la(s) "?" en el WHERE
                     null, null, null, null );
 
             if ( cursor.getCount() > 0 ) { // si existe el usuario
@@ -493,7 +467,40 @@ public class DBManager extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
         } catch(SQLException exc)
         {
-            Log.e( "DBManager.inserta", exc.getMessage() );
+            Log.e( "DBManager.existeUsuario", exc.getMessage() );
+        }
+        finally {
+            if ( cursor != null ) {
+                cursor.close();
+            }
+
+            db.endTransaction();
+        }
+
+        return toret;
+    }
+
+    public boolean existeAlimento(String nombre)
+    {
+        Cursor cursor = null;
+        boolean toret = false;
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        try {
+            db.beginTransaction();
+            cursor = db.query( TABLA_ALIMENTO,              // FROM tabla
+                    null,                           // SELECT (null equivale a *)
+                    NOMBRE_ALIMENTO + "=?",         // WHERE
+                    new String[]{ nombre },                 // valor(es) de la(s) "?" en el WHERE
+                    null, null, null, null );
+
+            if ( cursor.getCount() > 0 ) { // si existe el alimento
+                toret = true;
+            }
+            db.setTransactionSuccessful();
+        } catch(SQLException exc)
+        {
+            Log.e( "DBManager.existeAlimento", exc.getMessage() );
         }
         finally {
             if ( cursor != null ) {
@@ -514,10 +521,10 @@ public class DBManager extends SQLiteOpenHelper {
 
         try {
             db.beginTransaction();
-            cursor = db.query( TABLA_HISTORICO,                                   // FROM tabla
-                    null,                                              // SELECT (null equivale a *)
+            cursor = db.query( TABLA_HISTORICO,                        // FROM tabla
+                    null,                                      // SELECT (null equivale a *)
                     NOMBRE_USUARIO + "=? AND " + FECHA + "=?", // WHERE
-                    new String[]{ username, fecha },                         // valor(es) de la(s) "?" en el WHERE
+                    new String[]{ username, fecha },                   // valor(es) de la(s) "?" en el WHERE
                     null, null, null, null );
 
             if ( cursor.getCount() > 0 ) { // si existe el usuario
@@ -526,7 +533,7 @@ public class DBManager extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
         } catch(SQLException exc)
         {
-            Log.e( "DBManager.inserta", exc.getMessage() );
+            Log.e( "DBManager.existeHistorico", exc.getMessage() );
         }
         finally {
             if ( cursor != null ) {

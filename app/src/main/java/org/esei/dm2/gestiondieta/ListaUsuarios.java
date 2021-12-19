@@ -42,7 +42,7 @@ public class ListaUsuarios extends AppCompatActivity {
         btInserta.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                lanzaEditor( "", 0, true );
+                lanzaEditor( "", "", false );
             }
         });
 
@@ -59,14 +59,14 @@ public class ListaUsuarios extends AppCompatActivity {
                             String password = retData.getExtras().getString("password");
                             int admin = retData.getExtras().getInt("admin");
                             if (result.getResultCode() == Activity.RESULT_OK) { // creando usuario
-                                if (ListaUsuarios.this.gestorDB.insertaItem(username, password, admin)) {
+                                if (ListaUsuarios.this.gestorDB.insertaUsuario(username, password, admin)) {
                                     Toast.makeText(ListaUsuarios.this, "Usuario creado correctamente.", Toast.LENGTH_SHORT).show();
                                     actualizaUsuario();
                                 } else {
                                     Toast.makeText(ListaUsuarios.this, "Error, el usuario ya existe.", Toast.LENGTH_SHORT).show();
                                 }
                             } else if (result.getResultCode() == 1) { // modificando usuario
-                                if (ListaUsuarios.this.gestorDB.modificaItem(username, password, admin)) {
+                                if (ListaUsuarios.this.gestorDB.modificaUsuario(username, password, admin)) {
                                     Toast.makeText(ListaUsuarios.this, "Usuario modificado correctamente.", Toast.LENGTH_SHORT).show();
                                     actualizaUsuario();
                                 } else {
@@ -177,7 +177,7 @@ public class ListaUsuarios extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dlg, int opc) {
                             if ( opc == 0 ) {
-                                ListaUsuarios.this.gestorDB.eliminaItem( username );
+                                ListaUsuarios.this.gestorDB.eliminaUsuario( username );
                                 ListaUsuarios.this.actualizaUsuario();
                             }
                             else builder.create().closeOptionsMenu();
@@ -195,9 +195,13 @@ public class ListaUsuarios extends AppCompatActivity {
             case R.id.item_contextual_modifica:
                 if ( cursor.moveToPosition( pos ) ) {
                     final String username = cursor.getString( 0 );
-                    final int esAdmin = cursor.getInt(2);
+                    final String password = cursor.getString(1);
 
-                    lanzaEditor( username, esAdmin, true );
+                    boolean esAdmin;
+                    if (cursor.getInt(2) == 1) esAdmin = true;
+                    else esAdmin = false;
+
+                    lanzaEditor( username, password, esAdmin );
                     toret = true;
                 } else {
                     String msg = this.getString( R.string.msgNoPos ) + ": " + pos;
@@ -236,12 +240,12 @@ public class ListaUsuarios extends AppCompatActivity {
         lblNum.setText( String.format( Locale.getDefault(),"%d", this.adaptadorDB.getCount() ) );
     }
 
-    private void lanzaEditor(String username,int esAdmin, boolean admin)
+    private void lanzaEditor(String username, String password, boolean admin)
     {
         Intent subActividad = new Intent( ListaUsuarios.this, FormUsuario.class );
 
         subActividad.putExtra( "username", username );
-        subActividad.putExtra( "esAdmin", esAdmin );
+        subActividad.putExtra( "password", password );
         subActividad.putExtra( "admin", admin );
 
         activityResultLauncherEdit.launch(subActividad);

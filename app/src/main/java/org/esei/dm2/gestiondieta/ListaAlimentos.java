@@ -60,15 +60,15 @@ public class ListaAlimentos extends AppCompatActivity {
                             int cantidad = retData.getExtras().getInt("cantidad");
                             int calorias = retData.getExtras().getInt("calorias");
 
-                            if (result.getResultCode() == Activity.RESULT_OK) { // creando usuario
-                                if (ListaAlimentos.this.gestorDB.insertaAlimento(nombre, cantidad, calorias)) {
+                            if (result.getResultCode() == Activity.RESULT_OK) { // creando alimento
+                                if (ListaAlimentos.this.gestorDB.insertaAlimento(nombre, cantidad, calorias, true)) {
                                     Toast.makeText(ListaAlimentos.this, "Alimento añadido correctamente.", Toast.LENGTH_SHORT).show();
                                     actualizaAlimentos();
                                 } else {
                                     Toast.makeText(ListaAlimentos.this, "Error, el alimento ya existe.", Toast.LENGTH_SHORT).show();
                                 }
 
-                            } else if (result.getResultCode() == 1) { // modificando usuario
+                            } else if (result.getResultCode() == 1) { // modificando alimento
                                 if (ListaAlimentos.this.gestorDB.modificaAlimento(nombre, cantidad, calorias)) {
                                     Toast.makeText(ListaAlimentos.this, "Alimento modificado correctamente.", Toast.LENGTH_SHORT).show();
                                     actualizaAlimentos();

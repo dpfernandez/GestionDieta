@@ -47,6 +47,8 @@ public class CalcularCalorias extends AppCompatActivity {
 
         this.items = new ArrayList<Alimento>();
 
+        datos = ( (App) this.getApplication() ).getDatos();
+
         ImageButton btInserta = this.findViewById(R.id.btInserta);
         Button btCalcularBalance = this.findViewById(R.id.btCalculo);
         EditText ejercicio= this.findViewById(R.id.editTextEjercicio);
@@ -71,8 +73,6 @@ public class CalcularCalorias extends AppCompatActivity {
         String outputDateStr = outputFormat.format(dateStr);
         date.setText(outputDateStr);
 
-        SharedPreferences prefsUsuario = this.getSharedPreferences("NombreUsuario",0);
-        String username = prefsUsuario.getString("username","");
         final Intent retData = getIntent(); //se obtienen los datos de resultado
         final Double metabolismo = retData.getExtras().getDouble( "metabolismo" );
         final String objetivo = retData.getExtras().getString( "objetivo" );
@@ -120,12 +120,12 @@ public class CalcularCalorias extends AppCompatActivity {
                             CalcularCalorias.this.itemsAdapter.add(alimento);
                             int lastIndex = itemsAdapter.getCount() - 1;
                             lvItems.smoothScrollToPosition(lastIndex);
-                            CalcularCalorias.this.dbman.insertaAlimento(nombre, cantidad, calorias);
+                            CalcularCalorias.this.dbman.insertaAlimento(nombre, cantidad, calorias, false);
 
                             /** al añadir alimentos con nombres que aun no se encuentran registrados
-                            en la BD, son insertados automaticamente, de esta manera la
-                            BD va creciendo automaticamente a medida que los usuarios hacen uso
-                            de la aplicación. Los alimentos con nombres que ya figuran en la BD NO SON INSERTADOS*/
+                             en la BD, son insertados automaticamente, de esta manera la
+                             BD va creciendo automaticamente a medida que los usuarios hacen uso
+                             de la aplicación. Los alimentos con nombres que ya figuran en la BD NO SON INSERTADOS*/
 
                             Toast.makeText( CalcularCalorias.this, "Alimento agregado correctamente.", Toast.LENGTH_SHORT ).show();
 
@@ -137,25 +137,25 @@ public class CalcularCalorias extends AppCompatActivity {
 
         btCalcularBalance.setOnClickListener(new View.OnClickListener() { /**Hace la suma de todas las calorias aportadas por los alimentos
          que el usuario ha consumido en el dia y le resta su metabolismo basal y las calorias quemadas realizando ejercicio*/
-            @Override
-            public void onClick(View view) {
-                int calConsumidas=0;
-                String nombresAlimentos ="";
-                for(int i=0; i<itemsAdapter.getCount(); i++){
-                    calConsumidas+=itemsAdapter.getItem(i).getCalorias();
-                    nombresAlimentos= nombresAlimentos+itemsAdapter.getItem(i).getNombre()+"\n";
-                }
-
-                int ejer=0;
-
-                if(!ejercicio.getText().toString().equals(""))
-                    ejer=Integer.parseInt(ejercicio.getText().toString());
-
-                mostrarBalance.setText(calculoBalance(metabolismo, calConsumidas, ejer)+" calorias");
-                actualizaHistorico(username,fecha,calculoBalance(metabolismo, calConsumidas, ejer),nombresAlimentos);
-                avisarBalance(objetivo,calculoBalance(metabolismo, calConsumidas, ejer));
-
+        @Override
+        public void onClick(View view) {
+            int calConsumidas=0;
+            String nombresAlimentos ="";
+            for(int i=0; i<itemsAdapter.getCount(); i++){
+                calConsumidas+=itemsAdapter.getItem(i).getCalorias();
+                nombresAlimentos= nombresAlimentos+itemsAdapter.getItem(i).getNombre()+"\n";
             }
+
+            int ejer=0;
+
+            if(!ejercicio.getText().toString().equals(""))
+                ejer=Integer.parseInt(ejercicio.getText().toString());
+
+            mostrarBalance.setText(calculoBalance(metabolismo, calConsumidas, ejer)+" calorias");
+            actualizaHistorico(datos.getUsername(),fecha,calculoBalance(metabolismo, calConsumidas, ejer),nombresAlimentos);
+            avisarBalance(objetivo,calculoBalance(metabolismo, calConsumidas, ejer));
+
+        }
         });
 
         this.activityResultLauncherEdit = this.registerForActivityResult(contract, callback);
@@ -166,9 +166,10 @@ public class CalcularCalorias extends AppCompatActivity {
 
         SharedPreferences prefs = this.getPreferences( Context.MODE_PRIVATE );
 
+        String username = datos.getUsername();
         for (int i = 0; i < prefs.getInt(username,0); i++) {
-                    Alimento alimento = new Alimento(prefs.getString(username+"_"+i,""), prefs.getInt(username+"_"+i+"_cantidad", 1 ),prefs.getInt(username+"_"+i+"_calorias", 1 ));
-                    this.itemsAdapter.add(alimento);
+            Alimento alimento = new Alimento(prefs.getString(username+"_"+i,""), prefs.getInt(username+"_"+i+"_cantidad", 1 ),prefs.getInt(username+"_"+i+"_calorias", 1 ));
+            this.itemsAdapter.add(alimento);
         }
     }
 
@@ -240,11 +241,10 @@ public class CalcularCalorias extends AppCompatActivity {
     {
         super.onPause();
 
-        SharedPreferences prefsUsuario = this.getSharedPreferences("NombreUsuario",0);
-        String username = prefsUsuario.getString("username","");
         SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
+        String username = datos.getUsername();
         if(!itemsAdapter.isEmpty()) {
             editor.putInt(username,itemsAdapter.getCount());
             for (int i = 0; i < itemsAdapter.getCount(); i++) {
@@ -343,4 +343,5 @@ public class CalcularCalorias extends AppCompatActivity {
     private ArrayList<Alimento> items;
     private DBManager dbman;
     private SimpleCursorAdapter adaptadorDB;
+    private DatosUsuario datos;
 }

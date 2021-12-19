@@ -1,34 +1,17 @@
 package org.esei.dm2.gestiondieta;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import java.util.Locale;
 
 
 public class ListaHistorial extends AppCompatActivity {
@@ -53,8 +36,7 @@ public class ListaHistorial extends AppCompatActivity {
         // Configurar lista
         final ListView lvLista = this.findViewById( R.id.lvListaHistorico);
 
-        SharedPreferences prefs = this.getSharedPreferences("NombreUsuario",0);
-        final String nombre = prefs.getString("username","");
+        final String nombre =  ( (App) this.getApplication() ).getDatos().getUsername();
 
         this.adaptadorDB = new SimpleCursorAdapter(
                 this,
